@@ -1,0 +1,37 @@
+Exercise 04 - THINK and Limit Experiment
+============================================================
+
+THINK: One block of threads cannot cover a very large array.
+Exercise 5 combines blocks and threads.
+
+In the demonstrated one-thread-per-element design, one block cannot
+cover a very large array because the T4 permits at most 1024 threads
+per block. A 10,000,000-element array needs multiple blocks.
+
+Combine the block and thread indices:
+int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+Round up the number of blocks:
+int blocks = (N + threadsPerBlock - 1) / threadsPerBlock;
+
+Check the array boundary:
+if (i < N)
+    c[i] = a[i] + b[i];
+
+A kernel could alternatively loop over multiple elements per thread,
+but the lab uses one thread per element.
+
+LIMIT EXPERIMENT: Change N from 512 to 2048.
+
+The launch add<<<1, 2048>>> requests 2048 threads in one block.
+This exceeds the T4 limit of 1024 threads per block.
+
+Observed output:
+CUDA error at line 57: invalid argument
+Program exit code: 1
+
+CUDA_CHECK(cudaGetLastError()) after the launch detected the error
+and terminated the program before it copied or printed results.
+
+The working ex4_threads.cu remains at N = 512; the failed experiment
+is preserved separately in ex4_limit.cu.

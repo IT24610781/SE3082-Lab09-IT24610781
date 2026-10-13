@@ -1,0 +1,37 @@
+Exercise 02 - THINK Answers
+============================================================
+
+1. Why do we need separate variables d_a, d_b and d_c on the device?
+Why can the kernel not use a, b and c directly?
+
+In this program, a, b and c are ordinary host variables. The kernel
+accesses device memory allocated using cudaMalloc. The pointers d_a,
+d_b and d_c hold the addresses of those device allocations.
+We copy the inputs from host to device, run the kernel, and copy the
+result back. Other CUDA memory mechanisms exist, but this example
+uses explicit host and device allocations.
+
+2. In cudaMemcpy(d_a, &a, ...) we pass &a, but in the kernel launch
+we pass d_a. Why?
+
+a is an integer, so &a supplies the address of the host value to copy.
+d_a is already a pointer containing the address of device memory.
+The kernel receives d_a and dereferences it to access the GPU value.
+
+3. How many threads run the add kernel? What would you change to
+run it with 10 threads, and would the answer change?
+
+add<<<1, 1>>>(d_a, d_b, d_c) launches one block with one thread.
+
+To launch ten threads:
+add<<<1, 10>>>(d_a, d_b, d_c);
+
+All ten threads would calculate 2 + 7 and write to the same *c.
+The output may still appear to be 9, but concurrent writes to that
+location create a data race, so this is not a correct parallel design.
+
+For this scalar example, allow only one thread to write:
+if (threadIdx.x == 0)
+    *c = *a + *b;
+
+For a vector, give each thread a separate output element instead.
